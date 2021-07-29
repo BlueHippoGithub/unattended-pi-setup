@@ -4,3 +4,5 @@ Files and instructions for unattended/automatic setup of a Raspberry Pi using on
 This project borrows quite heavily from Jim Danner on GitLab: https://gitlab.com/JimDanner/pi-boot-script/-/tree/master
 
 I could never get his version working properly, I made a lot of changes and wanted to share them here.
+
+init=/bin/bash -c "mount -t proc proc /proc; mount -t sysfs sys /sys; mount /boot; source /boot/unattended"
