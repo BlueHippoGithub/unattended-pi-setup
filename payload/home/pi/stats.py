@@ -70,19 +70,22 @@ while True:
     HOSTNAME = socket.gethostbyaddr(socket.gethostname())[0]
     
     cmd = "vcgencmd measure_temp"
-    TEMP = subprocess.check_output(cmd, shell=True).decode("utf-8")
+    TEMP = subprocess.check_output(cmd, shell=True).decode("utf-8").replace("=", ": ")
 
     cmd = 'df -h | awk \'$NF=="/"{printf "Disk: %d/%d GB  %s", $3,$2,$5}\''
     Disk = subprocess.check_output(cmd, shell=True).decode("utf-8")
 
     # Write four lines of text.
 
-    draw.text((x, top + 0), HOSTNAME, font=font, fill=255)
+    #Hostname, Local IP, SOC Temp, Disk usage
+    draw.text((x, top + 0), "Host: " + HOSTNAME, font=font, fill=255)
     draw.text((x, top + 8), "IP: " + IP, font=font, fill=255)
-    draw.text((x, top + 16), "CPU: " + TEMP, font=font, fill=255)
+    draw.text((x, top + 16), "SOC " + TEMP, font=font, fill=255)
     draw.text((x, top + 25), Disk, font=font, fill=255)
 
     # Display image.
     disp.image(image)
     disp.show()
-    time.sleep(1)
+
+    #Number of seconds between refreshes
+    time.sleep(3)

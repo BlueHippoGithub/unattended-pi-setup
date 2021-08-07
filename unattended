@@ -13,6 +13,7 @@ sed -i 's| init=.*||' /boot/cmdline.txt
  /lib/systemd/system/one-time-script.service\
  /etc/systemd/system/multi-user.target.wants/
 
+#Reload daeomon and enable one time script
 systemctl daemon-reload
 systemctl enable one-time-script.service
 

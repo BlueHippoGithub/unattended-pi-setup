@@ -1,5 +1,6 @@
 #!/bin/bash
 # Start script for unattended configuration of a Raspberry Pi
+hname=raspberrypi
 get_parameters() {
 	# first the default values...
 	new_partition_size_MB=100
@@ -110,6 +111,8 @@ os_config() {
 	[[ $new_hostname_tag ]] && hname="pi$modelnr-$new_hostname_tag-$serial" || hname="pi$modelnr-$serial";
 	log -n "Set hostname to $hname: "
 
+
+	#Write hostname to ip.txt
 	echo $hname > /home/pi/ip.txt
 
 	raspi-config nonint do_hostname "$hname" && log OK || log FAILED;
@@ -157,33 +160,35 @@ write_card_file() {
 
 # 6. Install packages, enable i2c, enable oled stats screen and clean up
 install_packages() {
-	hostname -I >> /home/pi/ip.txt
 
+	#Install packages from /boot/package-list
 	< /boot/package-list xargs sudo apt install -y
 
-	sleep 5
-	IP = hostname -I
+	#Write IP to ip.txt which is the file we upload to a fileshare if that's not uncommented
+	hostname -I >> /home/pi/ip.txt
 
 	#Upload txt file containing Hostname and IP to a local samba share
-	#This uses the local IP of my ubuntu server which has a samba share, replace with your own IP and credentials needed
+	#This uses the local IP of my ubuntu server which has a samba share, replace with your own IP and the credentials needed
 	#If not, leave it uncommented
-	#smbmap -H 192.168.1.114 --upload /home/pi/ip.txt fileshare/$IP.txt
+	#smbmap -H 192.168.1.114 --upload /home/pi/ip.txt fileshare/$hname.txt
 
-	sudo systemctl disable packages-script.service && log OK || log FAILED;
-	sudo systemctl disable systemd-time-wait-sync
-
+	#Enable OLED stats script to launch at future bots
 	sudo systemctl enable oled-stats.service
 
+	#Enable i2c, set to 1 to disable
 	sudo raspi-config nonint do_i2c 0
+
+	#Pip install library needed for OLED screen to work
 	sudo pip3 install adafruit-circuitpython-ssd1306
 
 	#Remove the payload since all files and scripts are already moved/used at this point
 	sudo rm -rf /boot/payload
-	sudo rm /boot/one-time-script.conf
-	sudo rm /boot/package-list
-	sudo rm /boot/unattended
-	sudo rm /home/pi/one-time-script.sh
-	sudo rm /home/pi/packages-script.sh
+	sudo rm /boot/one-time-script.conf /boot/package-list
+	sudo rm /boot/unattended /home/pi/one-time-script.sh
+	
+	#Uncomment this to send a push notification with the IP to your phone if you're running gotify
+	#curl -X POST "192.168.1.114/message?token=GOTIFYTOKEN" -F title="Pi configuration complete" -F message="$(hostname -I)"
+	
 }
 
 # 1. INTERNAL SCRIPT BUSINESS
@@ -224,7 +229,6 @@ write_card_file
 # Write the log to the boot partition 
 date > /boot/$logfile
 cat $templog >> /boot/$logfile
-
 
 #clean up and install packages
 install_packages
